@@ -117,7 +117,9 @@ class DocumentLoader:
         
         # Helper untuk normalisasi judul/filename agar bisa dicocokkan
         def normalize_name(name):
-             return re.sub(r'[\\/*?:"<>|]', "", name)[:100].strip()
+            # Bersihkan karakter ilegal dan samakan case untuk konsistensi
+            cleaned = re.sub(r'[\\/*?:"<>|]', "", name)
+            return cleaned.lower()[:100].strip()
 
         # 1. Load existing JSON documents first
         json_docs = []
@@ -147,18 +149,22 @@ class DocumentLoader:
                 continue
                 
             # Cek apakah judul file ini cocok dengan salah satu dokumen di JSON
-            filename_no_ext = os.path.splitext(os.path.basename(pdf_file))[0]
+            filename_no_ext_raw = os.path.splitext(os.path.basename(pdf_file))[0]
+            filename_no_ext = normalize_name(filename_no_ext_raw)
             
             if filename_no_ext in doc_map:
                 # MATCH FOUND! Merge content.
                 # Kita prioritaskan konten PDF (full text) daripada konten JSON (biasanya abstrak)
                 # Tapi pertahankan metadata JSON (ID, Author, Date, dll)
                 target_doc = doc_map[filename_no_ext]
-                print(f"Merging PDF content into JSON metadata for: {filename_no_ext}")
+                print(f"Merging PDF content into JSON metadata for: {filename_no_ext_raw}")
                 target_doc['content'] = pdf_doc['content']
                 target_doc['source_file'] = os.path.basename(pdf_file)
+                target_doc['pdf_path'] = os.path.abspath(pdf_file)
             else:
                 # No match, this is a standalone PDF
+                pdf_doc['source_file'] = os.path.basename(pdf_file)
+                pdf_doc['pdf_path'] = os.path.abspath(pdf_file)
                 new_pdf_docs.append(pdf_doc)
         
         # 3. Load TXT files (Asumsikan standalone)

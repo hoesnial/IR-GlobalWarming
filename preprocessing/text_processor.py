@@ -27,6 +27,9 @@ class TextPreprocessor:
         
         # Load stopwords untuk digunakan secara terpisah jika diperlukan
         self.stopwords = stopword_factory.get_stop_words()
+        
+        # Cache untuk stemming hasil (speed up)
+        self._stem_cache = {}
     
     def case_folding(self, text: str) -> str:
         """
@@ -84,7 +87,7 @@ class TextPreprocessor:
     
     def stem_tokens(self, tokens: List[str]) -> List[str]:
         """
-        Melakukan stemming pada list tokens
+        Melakukan stemming pada list tokens dengan caching
         
         Args:
             tokens: List of tokens
@@ -92,7 +95,15 @@ class TextPreprocessor:
         Returns:
             List of stemmed tokens
         """
-        return [self.stemmer.stem(token) for token in tokens]
+        stemmed = []
+        for token in tokens:
+            if token in self._stem_cache:
+                stemmed.append(self._stem_cache[token])
+            else:
+                stem = self.stemmer.stem(token)
+                self._stem_cache[token] = stem
+                stemmed.append(stem)
+        return stemmed
     
     def preprocess(self, text: str, remove_stopwords: bool = True, 
                    use_stemming: bool = True) -> List[str]:

@@ -350,14 +350,26 @@ def build_index_from_documents(source_path: str, output_file: str = None,
         documents = []
     
     # Inisialisasi preprocessor dan index
+    print("Menginisialisasi preprocessor...")
     preprocessor = TextPreprocessor()
     inverted_index = InvertedIndex()
     
-    print(f"Memproses {len(documents)} dokumen...")
+    print(f"\nMemproses {len(documents)} dokumen...")
+    print("Tip: Proses ini butuh waktu untuk dokumen banyak. Tunggu sebentar!\n")
     
-    # Process setiap dokumen
-    for doc in documents:
+    # Process setiap dokumen dengan progress indicator
+    import time
+    start_time = time.time()
+    
+    for i, doc in enumerate(documents, 1):
         doc_id = doc['id']
+        
+        # Progress indicator setiap 10 dokumen
+        if i % 10 == 0 or i == 1:
+            elapsed = time.time() - start_time
+            avg_time = elapsed / i
+            remaining = (len(documents) - i) * avg_time
+            print(f"Progress: {i}/{len(documents)} dokumen ({i*100//len(documents)}%) - Estimasi sisa: {remaining:.1f}s")
         
         # Preprocess title dan content
         title_tokens = preprocessor.preprocess(doc['title'])
@@ -368,8 +380,10 @@ def build_index_from_documents(source_path: str, output_file: str = None,
         
         # Tambahkan ke index
         inverted_index.add_document(doc_id, all_tokens, doc)
-        
-        # print(f"  - Dokumen {doc_id}: {doc['title'][:50]}... ({len(all_tokens)} tokens)")
+    
+    total_time = time.time() - start_time
+    print(f"\n✓ Selesai memproses {len(documents)} dokumen dalam {total_time:.2f} detik")
+    print(f"  Rata-rata: {total_time/len(documents):.2f} detik per dokumen")
     
     # --- SELEKSI FITUR (Feature Selection) ---
     print("\nMelakukan Seleksi Fitur (Feature Selection)...")
