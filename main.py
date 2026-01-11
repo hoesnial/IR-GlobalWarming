@@ -188,8 +188,6 @@ class IRSystemGUI:
                   command=self.show_all_documents).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Rebuild Index", 
                   command=self.rebuild_index_dialog).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Download PDF", 
-                  command=self.download_documents).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Keluar", 
                   command=self.root.quit).pack(side=tk.LEFT, padx=5)
         
@@ -198,55 +196,7 @@ class IRSystemGUI:
         status_bar = ttk.Label(main_frame, textvariable=self.status_var, relief=tk.SUNKEN)
         status_bar.grid(row=4, column=0, sticky=(tk.W, tk.E), pady=5)
     
-    def download_documents(self):
-        """Mendownload dokumen PDF dari link di JSON"""
-        try:
-            from indexing.downloader import DocumentDownloader
-            import threading
-            
-            confirm = messagebox.askyesno(
-                "Konfirmasi Download", 
-                "Sistem akan memeriksa dan mendownload dokumen PDF yang belum ada di folder data.\n\n" +
-                "Proses ini membutuhkan koneksi internet. Lanjutkan?"
-            )
-            
-            if not confirm:
-                return
-            
-            # Paths
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            data_dir = os.path.join(base_dir, 'data')
-            docs_path = os.path.join(data_dir, 'documents.json')
-            
-            # Callback untuk update UI
-            def progress_callback(msg):
-                self.status_var.set(msg)
-                self.root.update()
-                print(msg)
-            
-            # Jalankan di function local (untuk kesederhanaan, bisa di-thread jika ingin non-blocking total)
-            # Tapi karena tkinter butuh update di main thread, kita jalankan langsung saja dengan self.root.update()
-            
-            self.status_var.set("Menyiapkan download...")
-            downloader = DocumentDownloader(data_dir)
-            
-            success, fail, skipped = downloader.download_from_json(docs_path, progress_callback)
-            
-            result_msg = f"Proses Selesai.\n\nBerhasil: {success}\nGagal: {fail}\nTerlewati: {skipped}"
-            messagebox.showinfo("Download Selesai", result_msg)
-            
-            if success > 0:
-                # Tawarkan rebuild index
-                rebuild = messagebox.askyesno(
-                    "Rebuild Index?", 
-                    "Ada dokumen baru didownload. Apakah Anda ingin membangun ulang index sekarang?"
-                )
-                if rebuild:
-                    self.rebuild_index_dialog()
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Gagal mendownload: {str(e)}")
-            self.status_var.set("Error Download")
+
             
     def perform_search(self):
         """Melakukan pencarian dokumen"""
