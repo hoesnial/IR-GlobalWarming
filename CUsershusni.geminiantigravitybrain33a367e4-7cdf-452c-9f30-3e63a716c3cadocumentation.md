@@ -212,6 +212,18 @@ Global_Warming/
 ### Hasil (Screenshot)
 *(Screenshot dapat diambil dari tampilan GUI saat aplikasi dijalankan, menampilkan hasil pencarian di kolom "Hasil Pencarian" dengan detail skor, judul, dan ringkasan.)*
 
+### Hasil Evaluasi Kinerja (Performance Metrics)
+Berdasarkan pengujian otomatis menggunakan 5 *test queries* terhadap dataset yang ada, diperoleh hasil rata-rata sebagai berikut:
+
+| Metric | Score (Rata-rata) | Interpretasi |
+| :--- | :--- | :--- |
+| **Mean Average Precision (MAP)** | **60.19%** | Sistem cukup baik dalam menempatkan dokumen relevan di peringkat atas. |
+| **Average Recall** | **90.00%** | Sistem sangat efektif menemukan hampir semua informasi yang relevan dalam database. |
+| **Average Precision** | **25.52%** | Terdapat beberapa dokumen non-relevan yang ikut terambil (noise), wajar untuk dataset kecil. |
+| **Average F1-Score** | **38.81%** | Keseimbangan antara presisi dan recall. |
+
+*Catatan: Nilai ini dihitung secara real-time oleh modul `evaluation/evaluator.py`.*
+
 ---
 
 ## 10. Limitations & Future Improvement

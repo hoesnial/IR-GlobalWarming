@@ -252,23 +252,23 @@ def create_test_queries() -> List[Dict]:
     test_queries = [
         {
             'query': 'pemanasan global efek rumah kaca',
-            'relevant': {1, 2, 3, 4, 10}  # Doc IDs yang relevan
+            'relevant': {1, 3}  # Doc 1 & 3 discuss greenhouse effect specifically
         },
         {
-            'query': 'energi terbarukan solusi',
-            'relevant': {6, 8, 11}
+            'query': 'dampak kesehatan masyarakat',
+            'relevant': {4}  # Only Doc 4 (Andalas) focus on health
         },
         {
-            'query': 'dampak perubahan iklim',
-            'relevant': {3, 4, 5, 9, 14}
+            'query': 'bahan bakar fosil',
+            'relevant': {2}  # Doc 2 mentions fossil fuels as cause
         },
         {
-            'query': 'emisi karbon transportasi',
-            'relevant': {2, 8}
+            'query': 'solusi upaya minimalisasi',
+            'relevant': {1, 2}  # Doc 1 & 2 discuss mitigation/solutions
         },
         {
-            'query': 'pencairan es kutub',
-            'relevant': {4}
+            'query': 'perubahan iklim lingkungan',
+            'relevant': {3, 4}  # Doc 3 & 4 discuss climate change impacts
         }
     ]
     
