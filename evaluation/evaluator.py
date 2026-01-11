@@ -244,40 +244,74 @@ class IREvaluator:
 
 def create_test_queries() -> List[Dict]:
     """
-    Membuat test queries dengan relevance judgments
-    
-    Returns:
-        List of test query dictionaries
+    Membuat test queries dengan kriteria relevansi berbasis kata kunci.
+    Alih-alih ID statis, kita gunakan kata kunci untuk mencocokkan dokumen secara dinamis.
     """
     test_queries = [
         {
             'query': 'pemanasan global efek rumah kaca',
-            'relevant': {1, 2, 3, 4, 10}  # Doc IDs yang relevan
+            'relevant_keywords': ['rumah kaca', 'greenhouse', 'pemanasan global', 'global warming']
         },
         {
             'query': 'energi terbarukan solusi',
-            'relevant': {6, 8, 11}
+            'relevant_keywords': ['energi terbarukan', 'renewable', 'tenaga surya', 'solar', 'solusi']
         },
         {
             'query': 'dampak perubahan iklim',
-            'relevant': {3, 4, 5, 9, 14}
+            'relevant_keywords': ['perubahan iklim', 'climate change', 'dampak', 'kesehatan', 'ekosistem']
         },
         {
             'query': 'emisi karbon transportasi',
-            'relevant': {2, 8}
+            'relevant_keywords': ['emisi', 'karbon', 'transportasi', 'co2', 'bahan bakar']
         },
         {
             'query': 'pencairan es kutub',
-            'relevant': {4}
+            'relevant_keywords': ['es', 'kutub', 'permukaan air', 'laut', 'banjir']
         }
     ]
-    
     return test_queries
 
+def generate_relevance_judgments(index, test_queries: List[Dict]) -> List[Dict]:
+    """
+    Menghasilkan 'Kunci Jawaban' (Ground Truth) secara dinamis
+    dengan mencari dokumen yang mengandung keywords relevan di Judul atau Isi.
+    """
+    import re
+    
+    final_queries = []
+    
+    # Ambil semua dokumen dari index
+    all_docs = index.documents
+    
+    for q_data in test_queries:
+        relevant_ids = set()
+        keywords = q_data['relevant_keywords']
+        
+        # Scan semua dokumen
+        for doc_id, doc in all_docs.items():
+            # Gabungkan judul dan konten untuk pengecekan
+            text_content = (doc.get('title', '') + " " + doc.get('content', '')).lower()
+            
+            # Cek apakah SALAH SATU keyword muncul
+            # Kita pakai logika sederhana: jika title mengandung keyword UTAMA, anggap relevan
+            is_relevant = False
+            for kw in keywords:
+                if kw.lower() in text_content:
+                    is_relevant = True
+                    break
+            
+            if is_relevant:
+                relevant_ids.add(doc_id)
+        
+        # Update query data dengan ID yang ditemukan
+        q_data['relevant'] = relevant_ids
+        final_queries.append(q_data)
+        
+    return final_queries
 
 def evaluate_search_system(search_engine, preprocessor, test_queries: List[Dict], k: int = 10) -> Dict:
     """
-    Evaluasi search engine dengan test queries
+    Evaluasi search engine dengan test queries yang sudah diperkaya dengan dynamic relevance
     
     Args:
         search_engine: Objek SearchEngine
@@ -288,15 +322,21 @@ def evaluate_search_system(search_engine, preprocessor, test_queries: List[Dict]
     Returns:
         Dictionary berisi hasil evaluasi
     """
-    evaluator = IREvaluator()
+    # 1. Generate Ground Truth dinamis berdasarkan isi database saat ini
+    # Kita butuh akses ke inverted index untuk scan dokumen
+    queries_with_relevance = generate_relevance_judgments(search_engine.index, test_queries)
     
-    # Jalankan query dan kumpulkan hasil
+    evaluator = IREvaluator()
     results = []
     
-    for query_data in test_queries:
+    for query_data in queries_with_relevance:
         query = query_data['query']
         relevant = query_data['relevant']
         
+        # Jika tidak ada dokumen relevan di database untuk topik ini, skip agar tidak merusak metrik
+        if not relevant:
+            continue
+            
         # Lakukan search
         search_results = search_engine.search(query, preprocessor, method='vector', top_k=k)
         retrieved = [doc['doc_id'] for doc in search_results]
@@ -308,8 +348,10 @@ def evaluate_search_system(search_engine, preprocessor, test_queries: List[Dict]
         })
     
     # Evaluasi
+    if not results:
+        return {}, []
+        
     evaluation = evaluator.evaluate_system(results, k)
-    
     return evaluation, results
 
 

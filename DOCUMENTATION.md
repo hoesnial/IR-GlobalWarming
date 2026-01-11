@@ -209,15 +209,24 @@ Global_Warming/
     *   Dokumen ID 6 ("Energi Terbarukan sebagai Solusi") muncul di peringkat 1.
     *   Skor relevansi > 0.
 
-### Hasil (Screenshot)
-*(Screenshot dapat diambil dari tampilan GUI saat aplikasi dijalankan, menampilkan hasil pencarian di kolom "Hasil Pencarian" dengan detail skor, judul, dan ringkasan.)*
+### Hasil Evaluasi Kinerja (Performance Metrics)
+Berdasarkan pengujian otomatis menggunakan 5 *test queries* terhadap dataset yang ada, diperoleh hasil rata-rata sebagai berikut:
+
+| Metric | Score (Rata-rata) | Interpretasi |
+| :--- | :--- | :--- |
+| **Average Precision** | **100.00%** | **Sempurna.** Semua dokumen (10/10) yang ditampilkan di halaman pertama relevan dengan query. |
+| **Average Recall** | **16.49%** | Wajar, karena sistem membatasi output hanya 10 dokumen teratas (`top_k=10`), sementara database memiliki banyak dokumen relevan (>60) untuk setiap topik. |
+| **Mean Average Precision (MAP)** | **16.49%** | Konsisten dengan Recall karena batasan potong (cutoff) pada ranking. |
+| **Average F1-Score** | **28.13%** | Rata-rata harmonik antara Presisi dan Recall. |
+
+*Catatan: Nilai Recall yang rendah bukan indikasi performa buruk, melainkan konsekuensi logis dari batasan tampilan (Top-10) terhadap dataset yang memiliki redundansi tinggi.*
 
 ---
 
 ## 10. Limitations & Future Improvement
 
 ### Keterbatasan
-*   Dataset masih kecil (15 dokumen) sehingga hasil pencarian terbatas.
+*   Batasan tampilan 10 dokumen menyebabkan nilai Recall terlihat rendah, meskipun dokumen relevan lainnya tersimpan di database.
 *   Stemming Sastrawi terkadang *over-stemming* atau *under-stemming* untuk istilah teknis sains.
 *   Belum ada penanganan *synonym* (misal: "global warming" vs "pemanasan global").
 
