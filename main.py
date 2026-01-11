@@ -246,8 +246,7 @@ class IRSystemGUI:
         
         # Clear previous PDF buttons
         for widget in self.pdf_buttons_frame.winfo_children():
-            if isinstance(widget, ttk.Button):
-                widget.destroy()
+            widget.destroy()
         
         # Header
         header = f"{'='*100}\n"
