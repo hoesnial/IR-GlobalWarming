@@ -8,6 +8,7 @@ from tkinter import ttk, scrolledtext, messagebox
 import json
 import os
 import sys
+import subprocess
 
 # Add modules to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -40,6 +41,7 @@ class IRSystemGUI:
         self.inverted_index = None
         self.tfidf_calculator = None
         self.search_engine = None
+        self.current_results = []  # Store current search results with PDF paths
         
         # Load atau build index
         self.initialize_system()
@@ -55,6 +57,8 @@ class IRSystemGUI:
             data_dir = os.path.join(base_dir, 'data')
             docs_path = os.path.join(data_dir, 'documents.json')
             index_path = os.path.join(data_dir, 'inverted_index.pkl')
+            # Simpan data_dir untuk penggunaan di fitur buka PDF
+            self.data_dir = data_dir
             
             # Check if documents exist
             if not os.path.exists(docs_path):
@@ -151,15 +155,26 @@ class IRSystemGUI:
         results_frame.columnconfigure(0, weight=1)
         results_frame.rowconfigure(0, weight=1)
         
-        # Results text area
+        # Results text area with PDF button frame
+        text_frame = ttk.Frame(results_frame)
+        text_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        text_frame.columnconfigure(0, weight=1)
+        text_frame.rowconfigure(0, weight=1)
+        
         self.results_text = scrolledtext.ScrolledText(
-            results_frame, 
+            text_frame, 
             wrap=tk.WORD, 
             width=120, 
             height=30,
             font=('Consolas', 10)
         )
         self.results_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Frame untuk tombol buka PDF di samping kanan
+        self.pdf_buttons_frame = ttk.Frame(text_frame)
+        self.pdf_buttons_frame.grid(row=0, column=1, sticky=(tk.N, tk.S), padx=5)
+        
+        ttk.Label(self.pdf_buttons_frame, text="Buka PDF:", font=('Arial', 9, 'bold')).pack(pady=5)
         
         # Button frame
         button_frame = ttk.Frame(main_frame)
@@ -261,6 +276,9 @@ class IRSystemGUI:
                 top_k=top_k
             )
             
+            # Store results for PDF opening
+            self.current_results = results
+            
             # Display results
             self.display_results(query, results, method)
             
@@ -276,6 +294,11 @@ class IRSystemGUI:
         # Clear previous results
         self.results_text.delete(1.0, tk.END)
         
+        # Clear previous PDF buttons
+        for widget in self.pdf_buttons_frame.winfo_children():
+            if isinstance(widget, ttk.Button):
+                widget.destroy()
+        
         # Header
         header = f"{'='*100}\n"
         header += f"HASIL PENCARIAN\n"
@@ -290,6 +313,9 @@ class IRSystemGUI:
         if not results:
             self.results_text.insert(tk.END, "Tidak ada dokumen yang ditemukan.\n")
             return
+        
+        # Re-add label after clearing buttons
+        ttk.Label(self.pdf_buttons_frame, text="Buka PDF:", font=('Arial', 9, 'bold')).pack(pady=5)
         
         # Display each result
         for i, doc in enumerate(results, 1):
@@ -313,10 +339,29 @@ class IRSystemGUI:
             except:
                 pass
             
+            # Tentukan path PDF dari metadata dokumen
+            pdf_path = doc.get('pdf_path', '')
+            if not pdf_path:
+                # Fallback: gunakan source_file dari proses merge PDF
+                source_file = doc.get('source_file', '')
+                if source_file:
+                    candidate_path = os.path.join(getattr(self, 'data_dir', os.path.dirname(os.path.abspath(__file__))), source_file)
+                    if os.path.exists(candidate_path):
+                        pdf_path = candidate_path
+
+            if pdf_path and os.path.exists(pdf_path):
+                result_text += f"PDF: {os.path.basename(pdf_path)}\n"
+                # Add button to open PDF
+                btn = ttk.Button(
+                    self.pdf_buttons_frame,
+                    text=f"[{i}] {doc['title'][:25]}...",
+                    command=lambda p=pdf_path: self.open_pdf(p),
+                    width=30
+                )
+                btn.pack(pady=2, fill=tk.X)
+            
             result_text += f"\n{'-'*100}\n\n"
             
-            self.results_text.insert(tk.END, result_text)
-    
             self.results_text.insert(tk.END, result_text)
     
     def get_content_snippet(self, content, query, window=150):
@@ -360,6 +405,27 @@ class IRSystemGUI:
             snippet = snippet[:-3] + "..."
             
         return snippet.replace('\n', ' ')
+    
+    def open_pdf(self, pdf_path):
+        """Membuka file PDF menggunakan default PDF viewer"""
+        try:
+            if not os.path.exists(pdf_path):
+                messagebox.showerror("Error", f"File PDF tidak ditemukan:\n{pdf_path}")
+                return
+            
+            # Buka PDF dengan default viewer di Windows
+            if sys.platform == 'win32':
+                os.startfile(pdf_path)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.run(['open', pdf_path])
+            else:  # Linux
+                subprocess.run(['xdg-open', pdf_path])
+            
+            self.status_var.set(f"Membuka: {os.path.basename(pdf_path)}")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal membuka PDF:\n{str(e)}")
+            self.status_var.set("Error membuka PDF")
 
     def show_index_stats(self):
         """Menampilkan statistik index"""

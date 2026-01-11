@@ -173,7 +173,9 @@ class SearchEngine:
                     'content': doc.get('content', ''),
                     'author': doc.get('author', ''),
                     'date': doc.get('date', ''),
-                    'category': doc.get('category', '')
+                    'category': doc.get('category', ''),
+                    'pdf_path': doc.get('pdf_path', ''),
+                    'source_file': doc.get('source_file', '')
                 })
             
             return formatted_results
@@ -193,7 +195,9 @@ class SearchEngine:
                     'content': doc.get('content', ''),
                     'author': doc.get('author', ''),
                     'date': doc.get('date', ''),
-                    'category': doc.get('category', '')
+                    'category': doc.get('category', ''),
+                    'pdf_path': doc.get('pdf_path', ''),
+                    'source_file': doc.get('source_file', '')
                 })
             
             return formatted_results
