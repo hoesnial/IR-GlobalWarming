@@ -4,7 +4,10 @@ Program utama dengan GUI menggunakan Tkinter
 """
 
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import scrolledtext, messagebox
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+from ttkbootstrap.dialogs import Messagebox
 import json
 import os
 import sys
@@ -92,12 +95,8 @@ class IRSystemGUI:
     
     def setup_gui(self):
         """Setup GUI components"""
-        # Style
-        style = ttk.Style()
-        style.theme_use('clam')
-        
         # Main container
-        main_frame = ttk.Frame(self.root, padding="10")
+        main_frame = ttk.Frame(self.root, padding="20")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure grid weights
@@ -107,51 +106,68 @@ class IRSystemGUI:
         main_frame.rowconfigure(2, weight=1)
         
         # Title
+        title_container = ttk.Frame(main_frame)
+        title_container.grid(row=0, column=0, pady=(0, 20), sticky="ew")
+        
         title_label = ttk.Label(
-            main_frame, 
+            title_container, 
             text="Sistem Pencarian & Ekstraksi Dokumen Pemanasan Global",
-            font=('Arial', 16, 'bold')
+            font=('Helvetica', 18, 'bold'),
+            bootstyle="primary"
         )
-        title_label.grid(row=0, column=0, pady=10)
+        title_label.pack()
+        
+        subtitle = ttk.Label(
+            title_container,
+            text="Temukan informasi relevan dari koleksi dokumen dengan cepat dan akurat",
+            font=('Helvetica', 10),
+            bootstyle="secondary"
+        )
+        subtitle.pack(pady=(5, 0))
         
         # Search frame
-        search_frame = ttk.LabelFrame(main_frame, text="Pencarian", padding="10")
+        search_frame = ttk.Labelframe(main_frame, text="Pencarian", padding="15", bootstyle="info")
         search_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=5)
         search_frame.columnconfigure(1, weight=1)
         
         # Query input
-        ttk.Label(search_frame, text="Query:").grid(row=0, column=0, sticky=tk.W, padx=5)
-        self.query_entry = ttk.Entry(search_frame, width=50)
+        ttk.Label(search_frame, text="Query:", font=('Helvetica', 10, 'bold')).grid(row=0, column=0, sticky=tk.W, padx=5)
+        self.query_entry = ttk.Entry(search_frame, width=50, bootstyle="primary")
         self.query_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=5)
         self.query_entry.bind('<Return>', lambda e: self.perform_search())
         
         # Search method
-        ttk.Label(search_frame, text="Metode:").grid(row=1, column=0, sticky=tk.W, padx=5)
+        ttk.Label(search_frame, text="Metode:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=10)
         self.search_method = tk.StringVar(value='vector')
         method_frame = ttk.Frame(search_frame)
-        method_frame.grid(row=1, column=1, sticky=tk.W, padx=5)
+        method_frame.grid(row=1, column=1, sticky=tk.W, padx=5, pady=10)
         
         ttk.Radiobutton(method_frame, text="Vector Space", variable=self.search_method, 
-                       value='vector').pack(side=tk.LEFT, padx=5)
+                       value='vector', bootstyle="info-toolbutton").pack(side=tk.LEFT, padx=5)
         ttk.Radiobutton(method_frame, text="Boolean AND", variable=self.search_method, 
-                       value='boolean_and').pack(side=tk.LEFT, padx=5)
+                       value='boolean_and', bootstyle="info-toolbutton").pack(side=tk.LEFT, padx=5)
         ttk.Radiobutton(method_frame, text="Boolean OR", variable=self.search_method, 
-                       value='boolean_or').pack(side=tk.LEFT, padx=5)
+                       value='boolean_or', bootstyle="info-toolbutton").pack(side=tk.LEFT, padx=5)
         
         # Top K
         ttk.Label(search_frame, text="Jumlah Hasil:").grid(row=2, column=0, sticky=tk.W, padx=5)
         self.top_k = tk.IntVar(value=10)
-        ttk.Spinbox(search_frame, from_=1, to=15, textvariable=self.top_k, width=10).grid(
-            row=2, column=1, sticky=tk.W, padx=5
-        )
+        spinbox = ttk.Spinbox(search_frame, from_=1, to=15, textvariable=self.top_k, width=10, bootstyle="info")
+        spinbox.grid(row=2, column=1, sticky=tk.W, padx=5)
         
         # Search button
-        search_btn = ttk.Button(search_frame, text="Cari", command=self.perform_search)
-        search_btn.grid(row=3, column=1, sticky=tk.W, padx=5, pady=5)
+        search_btn = ttk.Button(
+            search_frame, 
+            text="Cari Dokumen", 
+            command=self.perform_search,
+            bootstyle="primary-outline",
+            width=20
+        )
+        search_btn.grid(row=3, column=1, sticky=tk.W, padx=5, pady=(15, 5))
         
         # Results frame
-        results_frame = ttk.LabelFrame(main_frame, text="Hasil Pencarian", padding="10")
-        results_frame.grid(row=2, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        results_frame = ttk.Labelframe(main_frame, text="Hasil Pencarian", padding="10", bootstyle="success")
+        results_frame.grid(row=2, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), pady=20)
         results_frame.columnconfigure(0, weight=1)
         results_frame.rowconfigure(0, weight=1)
         
@@ -164,37 +180,47 @@ class IRSystemGUI:
         self.results_text = scrolledtext.ScrolledText(
             text_frame, 
             wrap=tk.WORD, 
-            width=120, 
-            height=30,
-            font=('Consolas', 10)
+            width=100, 
+            height=25,
+            font=('Segoe UI', 10),
+            bg='white',
+            relief=tk.FLAT
         )
         self.results_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
+        # Define tags for styling text
+        self.results_text.tag_config('header', font=('Segoe UI', 11, 'bold'), foreground='#2C3E50')
+        self.results_text.tag_config('title', font=('Segoe UI', 12, 'bold'), foreground='#2980B9')
+        self.results_text.tag_config('meta', font=('Segoe UI', 9, 'italic'), foreground='#7F8C8D')
+        self.results_text.tag_config('highlight', background='#FFF3CD')
+        self.results_text.tag_config('score', font=('Segoe UI', 9, 'bold'), foreground='#27AE60')
+        self.results_text.tag_config('separator', foreground='#BDC3C7')
+        
         # Frame untuk tombol buka PDF di samping kanan
         self.pdf_buttons_frame = ttk.Frame(text_frame)
-        self.pdf_buttons_frame.grid(row=0, column=1, sticky=(tk.N, tk.S), padx=5)
+        self.pdf_buttons_frame.grid(row=0, column=1, sticky=(tk.N, tk.S), padx=(10, 0))
         
-        ttk.Label(self.pdf_buttons_frame, text="Buka PDF:", font=('Arial', 9, 'bold')).pack(pady=5)
+        ttk.Label(self.pdf_buttons_frame, text="📄 Buka PDF", font=('Segoe UI', 10, 'bold'), bootstyle="inverse-secondary").pack(pady=5, fill=tk.X)
         
         # Button frame
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=3, column=0, pady=5)
+        button_frame.grid(row=3, column=0, pady=10)
         
         ttk.Button(button_frame, text="Evaluasi Sistem", 
-                  command=self.evaluate_system).pack(side=tk.LEFT, padx=5)
+                  command=self.evaluate_system, bootstyle="secondary-outline").pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Statistik Index", 
-                  command=self.show_index_stats).pack(side=tk.LEFT, padx=5)
+                  command=self.show_index_stats, bootstyle="info-outline").pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Lihat Semua Dokumen", 
-                  command=self.show_all_documents).pack(side=tk.LEFT, padx=5)
+                  command=self.show_all_documents, bootstyle="info-outline").pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Rebuild Index", 
-                  command=self.rebuild_index_dialog).pack(side=tk.LEFT, padx=5)
+                  command=self.rebuild_index_dialog, bootstyle="warning-outline").pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Keluar", 
-                  command=self.root.quit).pack(side=tk.LEFT, padx=5)
+                  command=self.root.quit, bootstyle="danger").pack(side=tk.LEFT, padx=20)
         
         # Status bar
         self.status_var = tk.StringVar(value="Sistem siap")
-        status_bar = ttk.Label(main_frame, textvariable=self.status_var, relief=tk.SUNKEN)
-        status_bar.grid(row=4, column=0, sticky=(tk.W, tk.E), pady=5)
+        status_bar = ttk.Label(main_frame, textvariable=self.status_var, relief=tk.SUNKEN, font=('Segoe UI', 9))
+        status_bar.grid(row=4, column=0, sticky=(tk.W, tk.E), pady=(5, 0))
     
 
             
@@ -249,42 +275,38 @@ class IRSystemGUI:
             widget.destroy()
         
         # Header
-        header = f"{'='*100}\n"
-        header += f"HASIL PENCARIAN\n"
-        header += f"{'='*100}\n"
-        header += f"Query: {query}\n"
-        header += f"Metode: {method}\n"
-        header += f"Jumlah hasil: {len(results)}\n"
-        header += f"{'='*100}\n\n"
-        
-        self.results_text.insert(tk.END, header)
+        self.results_text.insert(tk.END, "HASIL PENCARIAN\n", 'header')
+        self.results_text.insert(tk.END, f"{'='*50}\n", 'separator')
+        self.results_text.insert(tk.END, f"Query: {query}\nMethod: {method}\nTotal: {len(results)} dokumen\n\n")
         
         if not results:
-            self.results_text.insert(tk.END, "Tidak ada dokumen yang ditemukan.\n")
+            self.results_text.insert(tk.END, "Tidak ada dokumen yang ditemukan.\n", 'title')
             return
         
         # Re-add label after clearing buttons
-        ttk.Label(self.pdf_buttons_frame, text="Buka PDF:", font=('Arial', 9, 'bold')).pack(pady=5)
+        ttk.Label(self.pdf_buttons_frame, text="📄 Buka PDF", font=('Segoe UI', 10, 'bold'), bootstyle="inverse-secondary").pack(pady=5, fill=tk.X)
         
         # Display each result
         for i, doc in enumerate(results, 1):
-            result_text = f"[{i}] Dokumen ID: {doc['doc_id']}"
+            # Title
+            self.results_text.insert(tk.END, f"[{i}] {doc['title']}\n", 'title')
+            
+            # Metadata
+            meta = f"ID: {doc['doc_id']} | Kategori: {doc['category']} | Penulis: {doc['author']}"
             if method == 'vector':
-                result_text += f" | Score: {doc['score']:.4f}"
-            result_text += "\n"
+                meta += f" | Score: {doc['score']:.4f}"
+            self.results_text.insert(tk.END, meta + "\n", 'meta')
             
-            result_text += f"Judul: {doc['title']}\n"
-            result_text += f"Kategori: {doc['category']} | Penulis: {doc['author']} | Tanggal: {doc['date']}\n"
-            # Generate snippet based on query terms
+            # Snippet
             snippet = self.get_content_snippet(doc['content'], query)
-            result_text += f"\nSnippet:\n{snippet}\n"
+            self.results_text.insert(tk.END, f"\n{snippet}\n", 'highlight')
             
-            # Extract keywords
+            # Keywords
             try:
                 keyword_extractor = KeywordExtractor(self.tfidf_calculator)
                 keywords = keyword_extractor.extract_by_tfidf(doc['doc_id'], top_k=5)
                 keyword_str = ", ".join([k[0] for k in keywords])
-                result_text += f"\nKeywords: {keyword_str}\n"
+                self.results_text.insert(tk.END, f"Keywords: {keyword_str}\n", 'meta')
             except:
                 pass
             
@@ -299,19 +321,17 @@ class IRSystemGUI:
                         pdf_path = candidate_path
 
             if pdf_path and os.path.exists(pdf_path):
-                result_text += f"PDF: {os.path.basename(pdf_path)}\n"
                 # Add button to open PDF
                 btn = ttk.Button(
                     self.pdf_buttons_frame,
-                    text=f"[{i}] {doc['title'][:25]}...",
+                    text=f"{i}. {doc['title'][:20]}...",
                     command=lambda p=pdf_path: self.open_pdf(p),
-                    width=30
+                    bootstyle="info-outline",
+                    width=25
                 )
                 btn.pack(pady=2, fill=tk.X)
             
-            result_text += f"\n{'-'*100}\n\n"
-            
-            self.results_text.insert(tk.END, result_text)
+            self.results_text.insert(tk.END, f"\n{'-'*80}\n\n", 'separator')
     
     def get_content_snippet(self, content, query, window=150):
         """
@@ -565,7 +585,9 @@ def main():
     print()
     
     # Create GUI
-    root = tk.Tk()
+    # Using ttkbootstrap window with a theme
+    # Themes: cosmo, flatly, journal, literal, lumen, minty, pulse, sandstone, simplex, yeti, superhero, darkly, cyborg, vapor
+    root = ttk.Window(themename="cosmo") 
     app = IRSystemGUI(root)
     root.mainloop()
 

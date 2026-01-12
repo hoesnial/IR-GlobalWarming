@@ -5,6 +5,8 @@ Meliputi: tokenisasi, case folding, stopword removal, dan stemming
 
 import re
 import json
+import nltk
+from nltk.corpus import stopwords
 from typing import List, Dict
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
@@ -25,8 +27,17 @@ class TextPreprocessor:
         stopword_factory = StopWordRemoverFactory()
         self.stopword_remover = stopword_factory.create_stop_word_remover()
         
-        # Load stopwords untuk digunakan secara terpisah jika diperlukan
+        # Load stopwords Sastrawi
         self.stopwords = stopword_factory.get_stop_words()
+        
+        # Tambahkan stopwords Bahasa Inggris (NLTK)
+        try:
+            nltk.data.find('corpora/stopwords')
+        except LookupError:
+            nltk.download('stopwords')
+            
+        english_stops = list(stopwords.words('english'))
+        self.stopwords.extend(english_stops)
         
         # Cache untuk stemming hasil (speed up)
         self._stem_cache = {}
@@ -135,8 +146,8 @@ class TextPreprocessor:
         if use_stemming:
             tokens = self.stem_tokens(tokens)
         
-        # Filter token kosong
-        tokens = [token for token in tokens if token.strip()]
+        # Filter token kosong dan token tunggal (len < 2)
+        tokens = [token for token in tokens if token.strip() and len(token) > 1]
         
         return tokens
     

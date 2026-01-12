@@ -121,12 +121,22 @@ class DocumentLoader:
             cleaned = re.sub(r'[\\/*?:"<>|]', "", name)
             return cleaned.lower()[:100].strip()
 
-        # 1. Load existing JSON documents first
+        # 1. Load existing JSON documents
+        # Prioritize documents.json if exists, ignore backups
         json_docs = []
-        json_files = glob.glob(os.path.join(directory, "*.json"))
-        for json_file in json_files:
-            docs = self.load_json(json_file)
-            json_docs.extend(docs)
+        main_json = os.path.join(directory, "documents.json")
+        
+        if os.path.exists(main_json):
+            print(f"Loading main metadata file: {main_json}")
+            json_docs.extend(self.load_json(main_json))
+        else:
+            # Fallback: load all json but skip backups if possible
+            json_files = glob.glob(os.path.join(directory, "*.json"))
+            for json_file in json_files:
+                if "backup" in os.path.basename(json_file).lower():
+                    continue
+                docs = self.load_json(json_file)
+                json_docs.extend(docs)
             
         # Create lookup map based on 'clean filename' implied by title
         # Map: filename_no_ext -> doc_reference
@@ -152,17 +162,35 @@ class DocumentLoader:
             filename_no_ext_raw = os.path.splitext(os.path.basename(pdf_file))[0]
             filename_no_ext = normalize_name(filename_no_ext_raw)
             
+            # Coba match dengan filename normalized
+            match_found = False
             if filename_no_ext in doc_map:
-                # MATCH FOUND! Merge content.
-                # Kita prioritaskan konten PDF (full text) daripada konten JSON (biasanya abstrak)
-                # Tapi pertahankan metadata JSON (ID, Author, Date, dll)
+                match_found = True
                 target_doc = doc_map[filename_no_ext]
+            else:
+                # Coba fuzzy match sederhana (contains)
+                for map_name, doc_ref in doc_map.items():
+                    if filename_no_ext in map_name or map_name in filename_no_ext:
+                        # Asumsi match jika overlap string cukup panjang (>20 chars)
+                        if len(filename_no_ext) > 20: 
+                            match_found = True
+                            target_doc = doc_ref
+                            break
+            
+            if match_found:
+                # MATCH FOUND! Merge content.
+                # Kita prioritaskan konten PDF (full text) karena lebih lengkap
+                # Tapi pertahankan metadata JSON (ID, Author, Date, dll)
                 print(f"Merging PDF content into JSON metadata for: {filename_no_ext_raw}")
                 target_doc['content'] = pdf_doc['content']
                 target_doc['source_file'] = os.path.basename(pdf_file)
                 target_doc['pdf_path'] = os.path.abspath(pdf_file)
             else:
                 # No match, this is a standalone PDF
+                # IMPORTANT: Only add if absolutely sure it's new.
+                # For safety in this user case, we assume JSON is the source of truth.
+                # Only add if REALLY no match.
+                print(f"New PDF found (no metadata): {filename_no_ext_raw}")
                 pdf_doc['source_file'] = os.path.basename(pdf_file)
                 pdf_doc['pdf_path'] = os.path.abspath(pdf_file)
                 new_pdf_docs.append(pdf_doc)
