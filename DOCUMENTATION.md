@@ -42,6 +42,7 @@ Tujuan utama sistem ini adalah membangun aplikasi *Information Retrieval* (IR) *
 6.  **FR-06**: Sistem menerapkan **Information Retrieval Model** (TF-IDF & Cosine Similarity) untuk menghitung skor relevansi.
 7.  **FR-07**: Sistem melakukan **Query Processing & Document Ranking** untuk mengurutkan dokumen dari yang paling relevan.
 8.  **FR-08**: Sistem memiliki fitur **Text Document Summarization (Extractive)** untuk menghasilkan ringkasan otomatis dari dokumen.
+9.  **FR-09**: Sistem menangani duplikasi dokumen secara cerdas dengan mengabaikan file backup dan menyatukan konten PDF dengan metadata JSON.
 
 ### Non-Functional Requirements
 1.  **NFR-01 (Performance)**: Waktu respon pencarian rata-rata < 1 detik untuk dataset saat ini.
@@ -107,8 +108,9 @@ Setiap teks (baik dokumen maupun query) melewati tahapan:
 1.  **Case Folding**: Mengubah semua huruf menjadi huruf kecil (*lowercase*).
 2.  **Punctuation Removal**: Menghapus tanda baca dan angka.
 3.  **Tokenization**: Memecah kalimat menjadi daftar kata (list of tokens).
-4.  **Stopword Removal**: Menghapus kata umum yang tidak bermakna (misal: "dan", "yang", "di") menggunakan library **Sastrawi**.
-5.  **Stemming**: Mengubah kata berimbuhan menjadi kata dasar (misal: "memanaskan" -> "panas") menggunakan library **Sastrawi**.
+4.  **Short Word Filter**: Menghapus kata-kata yang terlalu pendek (< 2 karakter) untuk mengurangi noise.
+5.  **Stopword Removal**: Menghapus kata umum yang tidak bermakna. Menggunakan **Sastrawi** (Indonesian) dan **NLTK** (English) untuk menangani dokumen campuran.
+6.  **Stemming**: Mengubah kata berimbuhan menjadi kata dasar (misal: "memanaskan" -> "panas") menggunakan library **Sastrawi**.
 
 ### Inverted Index Design
 Struktur data utama adalah **Dictionary** python:
@@ -171,8 +173,8 @@ Sistem menggunakan **Extractive Summarization**.
 
 ### Tech Stack
 *   **Bahasa**: Python 3.1x
-*   **GUI Library**: Tkinter (built-in Python)
-*   **NLP Library**: `Sastrawi` (untuk Bahasa Indonesia)
+*   **GUI Library**: Tkinter + `ttkbootstrap` (Modern UI Theme)
+*   **NLP Library**: `Sastrawi` (Indonesian), `NLTK` (English Stopwords)
 *   **General Library**: `json`, `math`, `pickle`, `re`
 
 ### Struktur Folder
