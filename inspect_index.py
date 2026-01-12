@@ -11,12 +11,18 @@ if os.path.exists(index_path):
     docs = data['documents']
     print(f"Total documents in index: {len(docs)}")
     
-    print("\nSample Documents Metadata:")
-    for i, (doc_id, doc) in enumerate(list(docs.items())[:5]):
-        print(f"ID: {doc_id}")
-        print(f"Title: {doc.get('title', 'No Title')}")
-        print(f"PDF Path: {doc.get('pdf_path', 'N/A')}")
-        print(f"Source File: {doc.get('source_file', 'N/A')}")
-        print("-" * 50)
+    index = data['index']
+    print(f"\nTotal Unique Terms: {len(index)}")
+    
+    print("\nSample Inverted Index (First 10 terms):")
+    print("Format: Term -> [(DocID, Freq), ...]")
+    print("-" * 50)
+    
+    # Sort terms by frequency (posting list length) for more interesting results
+    sorted_terms = sorted(index.items(), key=lambda x: len(x[1]), reverse=True)
+    
+    for term, postings in sorted_terms[:20]:
+        print(f"{term:<20} : Found in {len(postings)} docs -> {postings[:5]}...")
+    print("-" * 50)
 else:
     print("Index file not found!")
